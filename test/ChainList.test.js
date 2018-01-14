@@ -1,0 +1,46 @@
+var ChainList = artifacts.require('./ChainList.sol');
+
+contract('ChainList', function(accounts) {
+  var chainListInstance;
+  var seller = accounts[1];
+  var articleName = 'article 1';
+  var articleDescription = 'Description of article 1';
+  var articlePrice = 10;
+
+  it('should be initialized with empty values', function() {
+    return ChainList.deployed()
+      .then(function(instance) {
+        return instance.getArticle.call();
+      })
+      .then(function(data) {
+        assert.equal(data[0], 0x0, 'seller must be empty');
+        assert.equal(data[1], '', 'article name must be empty');
+        assert.equal(data[2], '', 'description must be empty');
+        assert.equal(data[3].toNumber(), 0, 'article price must be zero');
+      });
+  });
+
+  it('should sell an article', function() {
+    return ChainList.deployed()
+      .then(function(instance) {
+        chainListInstance = instance;
+        return chainListInstance.sellArticle(
+          articleName,
+          articleDescription,
+          web3.toWei(articlePrice, 'ether'),
+          { from: seller }
+        );
+      })
+      .then(function(data) {
+        return chainListInstance.getArticle.call();
+      })
+      .then(function(data) {
+        var price = web3.toWei(articlePrice, 'ether');
+
+        assert.equal(data[0], seller, 'seller must be ' + seller);
+        assert.equal(data[1], articleName, 'article name must be ' + articleName);
+        assert.equal(data[2], articleDescription, 'description must be ' + articleDescription);
+        assert.equal(data[3].toNumber(), price, 'article price must be ' + price);
+      });
+  });
+});
